@@ -1,0 +1,245 @@
+---
+title: "2025-11-25_p8130-hw04"
+author: "Chris"
+date: "2025-11-25"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: cosmo
+---
+
+
+load some packages
+
+```{r include=FALSE}
+library(tidyverse)
+library(readxl)
+library(psych)
+```
+
+
+# Problem One
+
+
+## Question a: Sign Test
+
+```{r}
+df_blood_sugar <-
+  c(125, 123, 117, 123, 115, 112, 128, 118, 124, 111, 116, 109, 125,
+  120, 113, 123, 112, 118, 121, 118, 122, 115, 105, 118, 131)
+
+df_blood_sugar_no120 <-
+  df_blood_sugar[df_blood_sugar != 120]
+
+n <- length(df_blood_sugar_no120)
+n_below <- sum(df_blood_sugar_no120 < 120)
+n_above <- sum(df_blood_sugar_no120 > 120)
+```
+
+
+```{r}
+sign_test <- binom.test(n_above, n, p = 0.5, alternative = "less")
+
+sign_test
+```
+
+
+## Question b: Wilcoxon Signed-rank Test
+
+```{r}
+wc_sr_test <-
+  wilcox.test(df_blood_sugar_no120, mu = 120, alternative = "less", exact = TRUE)
+
+wc_sr_test
+```
+
+
+# Problem Three
+
+```{r}
+df_brain <-
+  read_excel("data/Brain data.xlsx") |>
+  janitor::clean_names()
+
+df_brain_nonhuman <- df_brain |>
+  filter(species != "Homo sapiens")
+
+df_brain_human <-
+  df_brain |>
+  filter(species == "Homo sapiens")
+```
+
+
+## Question a: Non-human Scatterplot
+
+
+```{r}
+df_brain_nonhuman |>
+  ggplot(aes(x = ln_brain_mass, y = glia_neuron_ratio)) +
+  geom_point(color = "#5a6acd")
+```
+
+
+```{r}
+lm_mass_ratio <-
+  lm(glia_neuron_ratio ~ ln_brain_mass, data = df_brain_nonhuman)
+
+summary(lm_mass_ratio)
+
+```
+
+
+## Question c: Prediction Interval
+
+```{r}
+predict(lm_mass_ratio, newdata = data.frame(ln_brain_mass = 7.22),
+        interval = "prediction",level = 0.95)
+```
+
+
+
+# Problem Three
+
+```{r}
+df_heart <-
+  read_csv("data/HeartDisease.csv") |>
+  janitor::clean_names()
+```
+
+
+
+## Question a: Description
+
+```{r}
+df_heart |>
+  select(totalcost, age, interventions, drugs, e_rvisits, 
+         complications, comorbidities, duration) |> 
+  describe()
+```
+
+
+```{r}
+table(df_heart$gender)
+prop.table(table(df_heart$gender)) * 100
+```
+
+
+## Question b: The Distribution of `totalcost`
+
+```{r}
+ggplot(df_heart, aes(x = totalcost)) +
+  geom_histogram(fill = "#6a5acd")
+
+df_heart <-
+  df_heart |>
+  mutate(
+    log_cost = log1p(totalcost)
+  )
+
+ggplot(df_heart, aes(x = log_cost)) +
+  geom_histogram(fill = "pink")
+```
+
+
+
+## Question c: `comp_bin`
+
+```{r}
+df_heart <- df_heart |>
+  mutate(comp_bin = if_else(complications == 0, 0, 1))
+```
+
+
+## Question d: SLR on Cost and ERvisits
+
+```{r}
+lm_cost_er <-
+  lm(log_cost ~ e_rvisits, data = df_heart)
+
+
+summary(lm_cost_er)
+```
+
+## Question e: MLR
+
+```{r}
+df_heart <-
+  df_heart |>
+  mutate(comp_bin = as_factor(comp_bin),
+         gender = as_factor(gender))
+
+lm_interaction <-
+  lm(log_cost ~ e_rvisits + comp_bin + e_rvisits * comp_bin, data = df_heart)
+summary(lm_interaction)
+```
+
+
+```{r}
+lm_cost_er_comp <-
+  lm(log_cost ~ e_rvisits + comp_bin, data = df_heart)
+
+summary(lm_cost_er_comp)
+```
+
+
+## Question f
+
+```{r}
+mlr_cost <-
+  lm(log_cost ~ comp_bin + age + gender + duration + e_rvisits, data = df_heart)
+
+summary(mlr_cost)
+```
+
+```{r}
+anova(lm_cost_er, mlr_cost)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
