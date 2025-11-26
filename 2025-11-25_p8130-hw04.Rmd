@@ -158,6 +158,8 @@ df_heart <- df_heart |>
 lm_cost_er <-
   lm(log_cost ~ e_rvisits, data = df_heart)
 
+df_heart|>
+  ggplot(aes(x = e_rvisits, y = log_cost)) + geom_point(color = "red")
 
 summary(lm_cost_er)
 ```
